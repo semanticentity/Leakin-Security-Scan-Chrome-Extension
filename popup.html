@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Leakin</title>
+  <meta charset="UTF-8">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      width: 350px;
+      padding: 10px;
+      margin: 0;
+    }
+    h1 {
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+    button {
+      background-color: #6200EA;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin: 10px auto 0;
+      width: 100%;
+    }
+    button:hover {
+      background-color: #5c0ab5;
+    }
+    .version-info {
+      font-size: 12px;
+      color: #666;
+      margin-top: 15px;
+      text-align: right;
+    }
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid #ccc;
+      margin-bottom: 15px;
+    }
+    .tab {
+      padding: 8px 16px;
+      cursor: pointer;
+      background-color: #f1f1f1;
+      border: 1px solid #ccc;
+      border-bottom: none;
+      margin-right: 2px;
+      border-top-left-radius: 4px;
+      border-top-right-radius: 4px;
+    }
+    .tab.active {
+      background-color: white;
+      border-bottom: 1px solid white;
+      margin-bottom: -1px;
+      font-weight: bold;
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+    #resultsContainer {
+      max-height: 300px;
+      overflow-y: auto;
+      border: 1px solid #eee;
+      padding: 10px;
+      margin-bottom: 10px;
+      background-color: #f9f9f9;
+    }
+    .result-item {
+      margin-bottom: 10px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #eee;
+    }
+    .result-item:last-child {
+      border-bottom: none;
+    }
+    .result-label {
+      font-weight: bold;
+      margin-right: 5px;
+    }
+    .settings-group {
+      margin-bottom: 15px;
+    }
+    .settings-group label {
+      display: block;
+      margin-bottom: 5px;
+    }
+    .settings-group input[type="checkbox"] {
+      margin-right: 5px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Leakin</h1>
+  
+  <div class="tabs">
+    <div class="tab active" data-tab="scan">Scan</div>
+    <div class="tab" data-tab="results">Results</div>
+    <div class="tab" data-tab="settings">Settings</div>
+  </div>
+  
+  <div id="scan" class="tab-content active">
+    <p>Scan web pages for exposed credentials and API keys</p>
+    <button id="executeButton">Run on Current Page</button>
+    <div id="scanStatus"></div>
+  </div>
+  
+  <div id="results" class="tab-content">
+    <p style="font-size: 14px; padding: 15px; background-color: #f5f5f5; border-radius: 4px;">
+      <strong>Pro Tip:</strong> View your scan history in Chrome by typing <code>chrome://extensions</code> in the address bar, then click on "Errors" to see all detected credential leaks across sites.
+    </p>
+  </div>
+  
+  <div id="settings" class="tab-content">
+    <div style="padding: 15px; background-color: #f5f5f5; border-radius: 4px;">
+      <p><strong>Is Leakin killing your vibe?</strong></p>
+      <p>Just disable the extension when you don't need it:</p>
+      <ol style="margin-left: 20px;">
+        <li>Go to <code>chrome://extensions</code></li>
+        <li>Toggle off Leakin</li>
+        <li>Re-enable when you need to scan again</li>
+      </ol>
+    </div>
+  </div>
+  
+  <div class="version-info">
+    Version 1.0.0
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>
