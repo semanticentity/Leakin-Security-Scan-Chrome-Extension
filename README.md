@@ -55,7 +55,11 @@ LLMs don't give af about security (or billing quotas) and the free market loves 
 
 Building in public sounds like a good idea, but it's always a very very bad idea.
 
-Leakin scans for:
+<img width="1348" alt="Karpathy what have you done?" src="https://github.com/user-attachments/assets/c2390a15-c1cf-4fcc-9c9d-d744feafda87" />
+
+---
+
+**Leakin scans for:**
 - Hardcoded secrets  
 - JWTs floating in global variables  
 - Unrestricted API keys  
@@ -63,6 +67,7 @@ Leakin scans for:
 - Database connection strings (yes, we've seen that)  
  
 **Leakin doesn't fix your mistakes.**   
+
 What happens next is between you, your cloud provider, and whatever forked version of VSCode your favorite LLM likes.
 
 
