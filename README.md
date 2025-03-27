@@ -21,6 +21,7 @@
     - [Honeytokens (What are Those?)](#honeytokens-what-are-those)
   - [Best Practices (If You Care About That Sort of Thing)](#best-practices-if-you-care-about-that-sort-of-thing)
   - [License and Warranty](#license-and-warranty)
+  - [Shoutouts](#shoutouts)
 
 ---
 
