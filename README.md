@@ -32,7 +32,6 @@ Perfect for AI-powered devs building entire apps without reading their own code,
 
 If you ever copied code from ChatGPT and shipped it without reading, Leakin was made for you.  
 
-
 ## Installation
 
 1. Clone this repo or download the zip
@@ -42,9 +41,21 @@ If you ever copied code from ChatGPT and shipped it without reading, Leakin was 
 
 ## Usage
 
-1. Leakin runs on page load, or you can click the Leakin icon in your Chrome toolbar
-2. View the scan status and any detected credential leaks in the panel and devtools console
-3. Check Leakin's Chrome extension error logs for a complete history of findings
+<img width="430" alt="whoops" src="https://github.com/user-attachments/assets/3f62dcca-aae6-48ba-a0f4-42deb71fe744" />
+
+Leakin runs on page load while it's active. View the scan status and any detected potential leaks in the panel or devtools console
+
+   
+<img width="430" alt="chatty help" src="https://github.com/user-attachments/assets/db21e571-940d-46b8-94be-ccf98071a81a" />
+
+Copy the findings with an LLM friendly prompt that will attempt to ELY5
+
+   
+<img width="430" alt="errorlogs" src="https://github.com/user-attachments/assets/c08e933e-efc1-4023-8be8-08fea271a177" />
+
+Check Leakin's Chrome extension error logs for a complete history of findings under chrome://extensions/
+
+
 
 ---
 
@@ -181,3 +192,11 @@ For **Security "Researchers"**:
 Non-Commercial Use Only. Not for distribution or commercial applications. 
 
 Use at your own risk. It's never too late to delete all your code and start over, or give up entirely.
+
+## Shoutouts 
+
+Big respect to WarrenBuffering for believing in dreams
+
+<img width="584" alt="Screenshot 2025-03-27 at 4 02 50 AM" src="https://github.com/user-attachments/assets/b9ce56bd-c94c-46f7-bf23-f61e803d0a80" />
+
+https://x.com/WarrenInTheBuff/status/1903471480140140854
