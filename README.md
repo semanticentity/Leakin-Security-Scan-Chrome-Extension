@@ -110,38 +110,36 @@ What happens next is between you, your cloud provider, and whatever forked versi
 
 ---
 
-## Supported Credential Types  
+## Supported Credential Types
 
-> _“The keys to the kingdom are usually lying around in plain sight. Leakin picks them up before someone else does.”_
+> *"The keys to the kingdom are usually lying around in plain sight. Leakin picks them up before someone else does."*
 
-| **Type**                          | **Pattern Example**               | **Risk Level** | **What Could Happen?**                                                   |
-|-----------------------------------|-----------------------------------|---------------:|--------------------------------------------------------------------------|
-| **Google API Key**                | `AIza...`                         | 🔥 High        | Unauthorized access to Maps, YouTube, Firebase → $$$ billing spikes     |
-| **Google OAuth Client ID**        | `xxx.apps.googleusercontent.com`  | ⚠️ Medium      | Potential abuse in OAuth phishing schemes                               |
-| **AWS Access Key ID**             | `AKIA...`                         | 🚨 Critical    | Full AWS access → crypto mining, data exfiltration, total account takeover |
-| **AWS Secret Access Key**         | `wJalrXUtnFEMI/K7MDENG/bPxRfiCY...` | 🚨 Critical | Used with Access Key ID → unlocks entire AWS environment                |
-| **Firebase API Key**              | `AIza...`                         | ⚠️ Medium      | Potential abuse of Firebase services → data theft, billing hits         |
-| **Stripe Publishable Key**        | `pk_live_...`                     | 🟡 Low/Medium  | Can be used in *checkout* abuse if domain restrictions aren't set       |
-| **Stripe Secret Key**             | `sk_live_...`                     | 🚨 Critical    | Full control over Stripe account → charge cards, access customer data   |
-| **SendGrid API Key**              | `SG.xxxxxxxx`                    | 🔥 High        | Send spam/phishing emails from your domain → blacklisting risks         |
-| **GitHub Personal Access Token**  | `ghp_...`                         | 🔥 High        | Repo access → code leaks, secrets exposed, malware injections           |
-| **GitHub OAuth Token**            | `gho_...`                         | 🔥 High        | User impersonation → repo control, PR abuse                            |
-| **OpenAI API Key**                | `sk-...`                          | ⚠️ Medium      | Abuse OpenAI endpoints → cost escalation, account depletion             |
-| **Twilio API Key**                | `SK...`                           | ⚠️ Medium      | Send SMS/calls → account charges, potential fraud                      |
-| **Slack Tokens**                  | `xoxb-...`, `xoxp-...`           | 🔥 High        | Full access to Slack → data leaks, impersonation, internal chaos        |
-| **Bearer Tokens**                | `Authorization: Bearer ...`      | 🚨 Critical    | Direct API access → impersonate users, gain access to protected endpoints |
-| **MongoDB URI**                  | `mongodb+srv://user:pass@host`   | 🚨 Critical    | Direct database access → data theft, data loss, ransom potential        |
-| **PostgreSQL URI**               | `postgres://user:pass@host/db`   | 🚨 Critical    | Same as above → full DB control                                         |
-| **MySQL URI**                    | `mysql://user:pass@host/db`      | 🚨 Critical    | Same as above → full DB control                                         |
-| **JWT Token**                    | `eyJhbGciOi...`                  | 🔥 High        | Impersonate users, access protected resources, privilege escalation     |
-| **Private Key (RSA/DSA/ECDSA)**  | `-----BEGIN PRIVATE KEY-----`    | 🚨 Critical    | Full access to servers/infrastructure, decrypted data risk              |
-| **Generic Client Secret**        | `client_secret=...`              | ⚠️ Medium      | OAuth abuse, bypass security mechanisms                                 |
-| **Secret Variables**             | `secret=...`                     | ⚠️ Medium      | General misuse → further recon, potential data exposure                 |
-| **Hardcoded Passwords**          | `password=...`                   | 🚨 Critical    | Compromise user/admin accounts, total system access                     |
-| **Authorization Bearer Token**   | `Authorization: Bearer ...`      | 🚨 Critical    | API calls impersonation → data theft, fraudulent activity               |
-| **Window Object Secrets**        | Dynamic detection                | 🔥 High        | Sensitive tokens/keys floating in memory → immediate exploitation       |
-| **Decoded JWTs with PII**        | Custom decoded payloads          | 🔥 High        | PII exposure → GDPR/CCPA risk, identity theft                          |
-| **Platform-Specific Tokens**     | e.g. CNN, Adobe JWTs             | 🔥 High        | Service impersonation, access to protected resources, session hijacking |
+| **Type**                     | **Pattern Example**                | **Risk Level** | **What Leakin Does**                                                              |
+| ---------------------------- | ---------------------------------- | -------------- | --------------------------------------------------------------------------------- |
+| Google OAuth Client ID       | `xxx.apps.googleusercontent.com`   | 🟡 Low         | Flags potential phishing targets, filters test creds                              |
+| Stripe Publishable Key       | `pk_live_...`                      | ⚠️ Medium      | Warns if domain restrictions not present                                          |
+| Google API Key               | `AIza...`                          | ⚠️ Medium      | Checks for Maps/Firebase access, dedupes, filters examples, warns if unrestricted |
+| Firebase API Key             | `AIza...`                          | ⚠️ Medium      | Flags if used with Firebase endpoints                                             |
+| OpenAI API Key               | `sk-...`                           | ⚠️ Medium      | Detected in scripts or memory, alerts on potential billing abuse                  |
+| Twilio API Key               | `SK...`                            | ⚠️ Medium      | Flags SMS/email abuse potential                                                   |
+| Client Secret                | `client_secret=...`                | ⚠️ Medium      | OAuth or backend misuse risk                                                      |
+| AWS Access Key ID            | `AKIA...`                          | 🚨 Critical    | Checks for pairing with secret key, high alert                                    |
+| AWS Secret Access Key        | `wJalrXUtnFEMI...`                 | 🚨 Critical    | Full AWS access detection, checks pairing and context                             |
+| Stripe Secret Key            | `sk_live_...`                      | 🚨 Critical    | Full Stripe access, clearly labeled                                               |
+| SendGrid API Key             | `SG....`                           | 🚨 Critical    | Triggers phishing/spam risk warning                                               |
+| GitHub Token                 | `ghp_...`, `gho_...`               | 🚨 Critical    | Shows origin, suggests revocation if valid                                        |
+| Slack Token                  | `xox[baprs]-...`                   | 🚨 Critical    | Detects across scripts and memory, alerts for internal access                     |
+| Bearer Token                 | `Authorization: Bearer ...`        | 🚨 Critical    | Flags any usage, explains impersonation risk                                      |
+| Authorization Bearer Token   | `Authorization: Bearer ...`        | 🚨 Critical    | Matches headers or JS values, warns if public-facing                              |
+| JWT Token                    | `eyJhbGciOi...`                    | 🚨 Critical    | Decodes payload, checks issuer, PII, expiration, session IDs                      |
+| Decoded JWTs with PII        | Custom payload with `email`, `sub` | 🚨 Critical    | Highlights identity exposure, GDPR/CCPA violations                                |
+| Platform Tokens (Adobe, etc) | JWTs with known issuer             | 🚨 Critical    | Custom decoding and pattern detection                                             |
+| MongoDB URI                  | `mongodb+srv://...`                | 🚨 Critical    | Flags direct DB access, warns about ransom/data loss                              |
+| PostgreSQL URI               | `postgres://...`                   | 🚨 Critical    | Full DB access risk                                                               |
+| MySQL URI                    | `mysql://...`                      | 🚨 Critical    | Full DB access risk                                                               |
+| Private Key                  | `-----BEGIN PRIVATE KEY-----`      | 🚨 Critical    | Full infra compromise if real                                                     |
+| Hardcoded Password           | `password="..."`                   | 🚨 Critical    | Filters false positives, flags real secrets                                       |
+| Window Object Secrets        | `window.app.authToken = "...";`    | 🚨 Critical    | Recursively scanned with pattern match + dedupe                                   |
 
 ---
 
