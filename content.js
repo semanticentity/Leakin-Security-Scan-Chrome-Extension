@@ -63,7 +63,7 @@ ${JSON.stringify(scrubbedFindings, null, 2)}
 3. **How to spot FALSE POSITIVES and make sure they're not an issue?**
 4. **If this is MY app:** what should I do to fix it, prevent it, and avoid embarrassing myself in the future?
 5. **If this is SOMEONE ELSE'S app:** how do I report it responsibly without being a troll or breaking any laws?
-6. **Explain like I'm a junior dev who didn't pay attention in school and now my life may be in your hands.**
+6. **Explain like I who skipped class the day they taught "Don't hardcode secrets" and now my life may be in your hands.**
 
 DISCLAIMER: This is for **education**, **security awareness**, and **responsible development**. 
 I even attempted to scrub the PII from the findings, but some sensitive information may still be present because I clearly don't know what I'm doing.
@@ -168,8 +168,6 @@ function executeBookmarklet(settings = {}) {
       description: 'JSON Web Token (JWT) found. These tokens often contain sensitive user data and authentication information. If exposed, they could be used to impersonate users or access protected resources.' },
     { label: 'Slack Token', pattern: /xox[baprs]-[0-9a-zA-Z]{10,48}/ig },
     { label: 'SendGrid API Key', pattern: /SG\.[a-zA-Z0-9_-]{22}\.[a-zA-Z0-9_-]{43}/ig },
-    { label: 'Google API Key', pattern: /AIza[0-9A-Za-z\-_]{20,}/ig, 
-      description: 'Google API keys (starting with AIza) can provide access to various Google services including Maps, YouTube, and Cloud APIs. If unrestricted, these can lead to unauthorized usage and billing charges.' },
   ];
 
   // Enhanced false positive patterns
@@ -265,6 +263,39 @@ function executeBookmarklet(settings = {}) {
     return false;
   }
 
+  function analyzeContext({ source, extractedValue }) {
+    let originDomain = null;
+    let contextNote = null;
+
+    const googleOwned = [
+      'google.com',
+      'googleapis.com',
+      'gstatic.com',
+      'withgoogle.com',
+      'maps.gstatic.com',
+      'maps.googleapis.com'
+    ];
+
+    const urlMatch = source.match(/\((.*?)\)/);
+    if (urlMatch) {
+      try {
+        const srcUrl = new URL(urlMatch[1]);
+        originDomain = srcUrl.hostname;
+        if (googleOwned.some(domain => originDomain.endsWith(domain))) {
+          contextNote = 'This key was found in a frontend script loaded from a Google-owned domain. It may be a public key used for rendering Maps or other services, and not an actual leak.';
+        }
+      } catch (_) {}
+    }
+
+    return { originDomain, contextNote };
+  }
+
+  function getRiskLevel(label) {
+    if (label.includes('Bearer') || label.includes('Secret') || label.includes('JWT') || label.includes('Private') || label.includes('Stripe Secret')) return 'CRITICAL';
+    if (label.includes('Publishable') || label.includes('API Key') || label.includes('Token')) return 'MEDIUM';
+    return 'LOW';
+  }
+
   function scanText(content, source) {
     let found = false;
     sensitivePatterns.forEach(({ label, pattern, description }) => {
@@ -289,14 +320,20 @@ function executeBookmarklet(settings = {}) {
         );
         
         if (!isDuplicate) {
+          const { originDomain, contextNote } = analyzeContext({ source, extractedValue });
+
           findings.push({
             source,
             match: trimmed,
-            extractedValue: extractedValue,
+            extractedValue,
             pattern: label,
-            description: description
+            description,
+            originDomain,
+            contextNote,
+            foundAt: new Date().toISOString(),
+            riskLevel: getRiskLevel(label)
           });
-          
+
           console.group(`🚨 Credentials found in ${source} [${label}]:`);
           console.warn(trimmed);
           if (description) {
@@ -407,7 +444,9 @@ function executeBookmarklet(settings = {}) {
                 source: path,
                 match: trimmed,
                 pattern: pattern,
-                description: description
+                description: description,
+                foundAt: new Date().toISOString(),
+                riskLevel: getRiskLevel(label)
               });
               
               console.group(`🚨 Credentials found in ${path} [${pattern}]:`);
@@ -507,6 +546,9 @@ function executeBookmarklet(settings = {}) {
         }
         return finding;
       });
+
+      // Count the number of critical findings
+      const criticalCount = findings.filter(f => f.riskLevel === 'CRITICAL').length;
       
       if (scanSettings.showPopupOnScan) {
         showPopup(findings);
@@ -567,6 +609,9 @@ function executeBookmarklet(settings = {}) {
     // Append to body first to ensure it exists before adding event listeners
     document.body.appendChild(popup);
 
+    // Count the number of critical findings
+    const criticalCount = data.filter(f => f.riskLevel === 'CRITICAL').length;
+
     popup.innerHTML = `
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
         <h3 style="margin: 0 0 5px; font-size: 17px; color: white; padding: 0; font-weight: 400; font-family: system-ui, arial, sans-serif;">🚨 Leaks Found</h3>
@@ -574,7 +619,8 @@ function executeBookmarklet(settings = {}) {
       </div>
       <p style="margin-bottom: 10px; font-size: 14px; font-weight: 400; font-family: system-ui, arial, sans-serif; color: #fff;">
         ${data.length} potential leak${data.length !== 1 ? 's' : ''} detected
-        <button id="copy-llm-btn" style="float: right; background: #373d35; color: #fdf3aa; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; font-family: system-ui, arial, sans-serif; font-weight: 600;">Copy with LLM prompt</button>
+        ${criticalCount > 0 ? ` | ⚠️ <strong style="color: #fdf3aa;">${criticalCount} marked as CRITICAL</strong>` : ''}
+        <button id="copy-llm-btn" style="float: right; background: #373d35; color: #fdf3aa; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; font-family: system-ui, arial, sans-serif; font-weight: 600; position: absolute; width: 150px; top: 100px; right: 40px;">Copy with LLM prompt</button>
       </p>
       <div style="max-height: 300px; overflow-y: auto; margin-bottom: 15px; border: 1px solid #333; padding: 10px; border-radius: 4px;">
         ${data.map(item => `
@@ -588,6 +634,8 @@ function executeBookmarklet(settings = {}) {
             </div>
             <div style="margin-bottom: 5px;"><strong>Match:</strong> <code style="word-break: break-all;color: #fdf3aa;font-weight: bold;font-family: monospace; background: none; font-size: 14px; border: none;">${item.match}</code></div>
             ${item.description ? `<div style="margin-bottom: 5px;"><strong>Description:</strong> ${item.description}</div>` : ''}
+            ${item.originDomain ? `<div style="margin-bottom: 5px;"><strong>Script Origin:</strong> ${item.originDomain}</div>` : ''}
+            ${item.contextNote ? `<div style="margin-bottom: 5px; font-style: italic; color: #aaa;">${item.contextNote}</div>` : ''}
             ${item.decoded ? `
               <div style="margin-top: 5px;">
                 <strong>Decoded:</strong>

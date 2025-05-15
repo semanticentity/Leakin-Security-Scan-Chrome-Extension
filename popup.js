@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Console logging for developers
   console.log('Extension popup initialized');
-  console.log('Extension version: "1.0.0"');
+  console.log('Extension version: "1.0.1"');
   
   // Execute scan button
   executeButton.addEventListener('click', () => {
