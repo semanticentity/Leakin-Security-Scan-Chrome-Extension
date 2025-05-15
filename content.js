@@ -290,10 +290,35 @@ function executeBookmarklet(settings = {}) {
     return { originDomain, contextNote };
   }
 
+  const riskMap = {
+    'Google API Key': 'MEDIUM',
+    'Google OAuth Client ID': 'LOW',
+    'AWS Access Key ID': 'CRITICAL',
+    'AWS Secret Access Key': 'CRITICAL',
+    'Firebase API Key': 'MEDIUM',
+    'Stripe Publishable Key': 'MEDIUM',
+    'Stripe Secret Key': 'CRITICAL',
+    'SendGrid API Key': 'CRITICAL',
+    'GitHub Token': 'CRITICAL',
+    'OpenAI API Key': 'MEDIUM',
+    'Twilio API Key': 'MEDIUM',
+    'Slack Token': 'CRITICAL',
+    'Bearer Token': 'CRITICAL',
+    'JWT Token': 'CRITICAL',
+    'MongoDB URI': 'CRITICAL',
+    'PostgreSQL URI': 'CRITICAL',
+    'MySQL URI': 'CRITICAL',
+    'Private Key': 'CRITICAL',
+    'Client Secret': 'CRITICAL',
+    'Hardcoded Password': 'CRITICAL',
+    'Window Object Secrets': 'CRITICAL',
+    'Decoded JWTs with PII': 'CRITICAL',
+    'Platform Tokens': 'CRITICAL',
+    'Authorization Bearer Token': 'CRITICAL'
+  };
+
   function getRiskLevel(label) {
-    if (label.includes('Bearer') || label.includes('Secret') || label.includes('JWT') || label.includes('Private') || label.includes('Stripe Secret')) return 'CRITICAL';
-    if (label.includes('Publishable') || label.includes('API Key') || label.includes('Token')) return 'MEDIUM';
-    return 'LOW';
+    return riskMap[label] || 'LOW';
   }
 
   function scanText(content, source) {
