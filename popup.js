@@ -197,44 +197,70 @@ document.addEventListener('DOMContentLoaded', () => {
     chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
       if (tabs && tabs[0]) {
         const tabId = tabs[0].id;
+        console.log(`[${new Date().toISOString()}] Popup: Reloading tab ${tabId}`);
         // First refresh the page
         chrome.tabs.reload(tabId, {}, () => {
-          // Attempt to send the message shortly after reload callback.
-          // Content script has logic to queue if not immediately ready.
-          // We'll use a short delay to allow the tab to settle from reload.
-          setTimeout(() => {
-            chrome.tabs.sendMessage(tabId, {
-              action: "execute", 
-              settings: currentScanSettings // Send current settings
-            }, (response) => {
-              if (chrome.runtime.lastError) {
-                console.error("Error sending message to content script:",chrome.runtime.lastError.message);
-                scanStatus.textContent = 'Error: Could not connect to page. Try again after page loads, or on a different page.';
-                executeButton.disabled = false;
-              } else if (response && response.status === "executed") {
-                scanStatus.textContent = `Scan complete! Found ${response.findingsCount} items.`;
-                chrome.storage.local.set({lastScanFindings: response.findings || []}, () => {
-                  if (chrome.runtime.lastError) console.error("Error saving findings to local storage:", chrome.runtime.lastError);
-                  // Optionally, switch to results tab if findings are present
-                  if (response.findingsCount > 0) {
-                    // document.querySelector('.tab[data-tab="results"]').click(); // Uncomment to auto-switch
-                    loadAndDisplayFindings(); // Ensure results tab is updated if already active
+          console.log(`[${new Date().toISOString()}] Popup: Tab ${tabId} reload initiated.`);
+
+          let attempts = 0;
+          const maxAttempts = 5;
+          const initialDelay = 500; // ms
+
+          function sendMessageWithRetry() {
+            attempts++;
+            if (attempts > maxAttempts) {
+              console.error(`[${new Date().toISOString()}] Popup: Max attempts reached. Could not connect to content script in tab ${tabId}.`);
+              scanStatus.textContent = 'Error: Page took too long to respond. Try again or check console.';
+              executeButton.disabled = false;
+              return;
+            }
+
+            const delay = initialDelay * attempts;
+            console.log(`[${new Date().toISOString()}] Popup: Attempt ${attempts}/${maxAttempts} to send message after ${delay}ms delay.`);
+
+            setTimeout(() => {
+              console.log(`[${new Date().toISOString()}] Popup: Sending 'execute' message to tab ${tabId}, attempt ${attempts}. Settings:`, currentScanSettings);
+              chrome.tabs.sendMessage(tabId, {
+                action: "execute",
+                settings: currentScanSettings
+              }, (response) => {
+                if (chrome.runtime.lastError) {
+                  console.warn(`[${new Date().toISOString()}] Popup: Attempt ${attempts} failed. Error:`, chrome.runtime.lastError.message);
+                  if (chrome.runtime.lastError.message.includes("Receiving end does not exist") || chrome.runtime.lastError.message.includes("Could not establish connection")) {
+                    // Specific errors that indicate content script is not ready, so retry
+                    sendMessageWithRetry(); // Recursive call for next attempt
+                  } else {
+                    // Other errors, might not be recoverable by retry
+                    console.error(`[${new Date().toISOString()}] Popup: Unrecoverable error sending message:`, chrome.runtime.lastError.message);
+                    scanStatus.textContent = 'Error: Could not connect. Check console.';
+                    executeButton.disabled = false;
                   }
-                });
-                executeButton.disabled = false;
-              } else {
-                // Handle other responses or lack of response if content script queues but doesn't confirm execution quickly
-                console.log("Scan initiated, content script may be processing.", response);
-                // scanStatus.textContent = 'Scan initiated...'; // Keep it on "scanning..."
-                // The button will be re-enabled by the response or error handling eventually.
-                // If no response comes, user might need to click again.
-                // This part depends on how robust the queuing and eventual response from content.js is.
-                // For now, we assume content.js will eventually respond or popup will hit runtime.lastError.
-              }
-            });
-          }, 250); // Reduced delay, content script handles queuing.
+                } else if (response && response.status === "executed") {
+                  console.log(`[${new Date().toISOString()}] Popup: Message successfully processed by content script. Response:`, response);
+                  scanStatus.textContent = `Scan complete! Found ${response.findingsCount} items.`;
+                  chrome.storage.local.set({lastScanFindings: response.findings || []}, () => {
+                    if (chrome.runtime.lastError) console.error("Error saving findings to local storage:", chrome.runtime.lastError);
+                    if (response.findingsCount > 0) {
+                      loadAndDisplayFindings();
+                    }
+                  });
+                  executeButton.disabled = false;
+                } else {
+                  // Response received, but not the expected "executed" status, or undefined response
+                  console.warn(`[${new Date().toISOString()}] Popup: Received unexpected response or no response object from content script. Response:`, response);
+                  // Depending on content.js logic, this might mean it queued it.
+                  // For now, we'll treat as an issue if not "executed"
+                  // If content.js guarantees a response even for queued, this logic might change.
+                  // For now, if not "executed", retry.
+                  sendMessageWithRetry();
+                }
+              });
+            }, delay);
+          }
+          sendMessageWithRetry(); // Start the first attempt
         });
       } else {
+        console.error(`[${new Date().toISOString()}] Popup: No active tab found.`);
         scanStatus.textContent = 'Error: No active tab found';
         executeButton.disabled = false;
       }

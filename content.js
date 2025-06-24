@@ -614,60 +614,83 @@ function showPopup(popupData) {
 
 
 // --- Initialization and Message Handling ---
+console.log(`[${new Date().toISOString()}] Leakin content.js: Script execution started.`);
 let isContentScriptReady = false;
 let queuedScanRequest = null;
 
 // Initial execution when the content script loads on a page
+console.log(`[${new Date().toISOString()}] Leakin content.js: Performing initial executeBookmarklet() call.`);
 executeBookmarklet(); // Run with default settings initially
-isContentScriptReady = true;
+// isContentScriptReady will be set to true after this initial setup.
 
 // Process any queued request that came in before content script was fully ready
 function processQueuedRequest() {
   if (queuedScanRequest) {
-    console.log("Processing queued scan request.");
+    console.log(`[${new Date().toISOString()}] Leakin content.js: Processing queued scan request:`, queuedScanRequest);
     executeBookmarklet(queuedScanRequest.settings);
-    // We need to be careful about sendResponse here if the original listener already returned.
-    // For simplicity, the popup's execute listener has a timeout and handles errors.
-    // If a direct response is needed for the queued request, this logic would be more complex.
+    // Assuming executeBookmarklet leads to processAndDisplayFindings which might implicitly "respond"
+    // or the popup relies on timeout if direct sendResponse isn't feasible here.
+    // If a direct response for the queued request is needed, it's complex as the original listener might have closed.
+    // The current popup retry logic is designed to handle this by re-sending.
     queuedScanRequest = null;
   }
 }
 
-// Set ready and process queue (ensure this runs after initial executeBookmarklet)
+// Set ready and process queue
 Promise.resolve().then(() => {
+    // This ensures that the initial executeBookmarklet() has completed its synchronous parts.
     isContentScriptReady = true;
-    console.log("Leakin content script is ready.");
-    processQueuedRequest();
+    console.log(`[${new Date().toISOString()}] Leakin content.js: isContentScriptReady set to true. Initial scan should be complete or in progress.`);
+    processQueuedRequest(); // Process any requests that arrived very early.
 });
 
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  console.log(`[${new Date().toISOString()}] Leakin content.js: Message received. Request:`, JSON.parse(JSON.stringify(request)));
+  if (sender) {
+     console.log(`[${new Date().toISOString()}] Leakin content.js: Message sender:`, JSON.parse(JSON.stringify(sender)));
+  }
+
+
   if (request.action === "execute") {
     if (isContentScriptReady) {
-      console.log("Executing scan from popup message with settings:", request.settings);
-      executeBookmarklet(request.settings);
+      console.log(`[${new Date().toISOString()}] Leakin content.js: Content script is ready. Executing scan from popup message with settings:`, request.settings);
+      executeBookmarklet(request.settings); // This will eventually call processAndDisplayFindings
+      // processAndDisplayFindings does not directly use sendResponse.
+      // The response should be based on the findings *after* the scan.
+      // To ensure findings are current, we might need to make executeBookmarklet async or tap into its completion.
+      // For now, sending response with current state of 'findings' global.
+      console.log(`[${new Date().toISOString()}] Leakin content.js: Sending 'executed' response. Findings count: ${findings.length}`);
       sendResponse({status: "executed", findingsCount: findings.length, findings: findings});
     } else {
-      console.log("Content script not ready, queuing scan request.");
+      console.log(`[${new Date().toISOString()}] Leakin content.js: Content script NOT ready. Queuing scan request:`, request);
       queuedScanRequest = request;
-      // sendResponse({status: "queued"}); // Optional: inform popup it's queued
-      // Or, more simply, let the popup timeout/retry or rely on its own check.
-      // For now, we don't send an immediate response for queued, to keep popup logic simpler.
-      // The popup's executeButton.disabled and scanStatus will handle user feedback.
+      // It's important NOT to call sendResponse here if we want the popup to retry.
+      // If we call sendResponse (e.g., {status: "queued"}), the popup's sendMessage callback will fire,
+      // and it might not retry. The retry logic in popup.js depends on chrome.runtime.lastError.
+      // By not calling sendResponse, the communication channel remains open, and if the popup times out,
+      // it should result in chrome.runtime.lastError being set on the popup side, triggering a retry.
+      // However, standard behavior is that if onMessage listener returns undefined (by not calling sendResponse),
+      // the channel closes. So we must return true to indicate async response.
+      // The popup might still get an undefined response if we don't call sendResponse eventually.
+      // This interaction is tricky. Let's assume for now the popup's retry handles it if no response comes.
+      // The key is that `return true` keeps the channel open for an *asynchronous* sendResponse.
+      // If we never call sendResponse for a queued message, the popup will eventually hit its own timeout or error.
     }
-    return true; // Indicate that we will send a response asynchronously (eventually)
+    return true; // Crucial: Indicate that we will send a response asynchronously.
   }
-  // Note: Export functionality might be better handled in popup.js using findings from the main scan,
-  // or by requesting the current 'findings' array from content.js.
-  // Direct file operations like creating blobs and links are UI interactions for the current page,
-  // which might be unexpected if triggered from popup without user action on the page itself.
-  // For now, keeping it as is, but consider UX implications.
+
   if (request.action === "export" && request.data) {
+    console.log(`[${new Date().toISOString()}] Leakin content.js: Received 'export' action.`);
     exportFindings(request.data, request.filename);
     sendResponse({status: "exported"});
-    return true;
+    return true; // Indicate async response
   }
-  return false; // Indicate async response not sent or message not handled
+
+  console.log(`[${new Date().toISOString()}] Leakin content.js: Message not handled by this listener. Action: ${request.action}`);
+  return false; // Indicate message not handled or async response not intended for other actions.
 });
 
-console.log("Leakin content script loaded and running.");
+console.log(`[${new Date().toISOString()}] Leakin content.js: Script loaded and onMessage listener added.`);
+// Initial scan is triggered by executeBookmarklet() at the top.
+// isContentScriptReady is set to true after that initial setup.
