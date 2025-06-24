@@ -56,7 +56,35 @@ Copy the findings with an LLM friendly prompt that will attempt to ELY5
 
 Check Leakin's Chrome extension error logs for a complete history of findings under chrome://extensions/
 
+---
 
+## What's New in V2 (Developer Preview)
+
+Alright, so you thought Leakin was just a one-trick pony? Think again. We bolted on some new stuff (because why not procrastinate on that Series A pitch deck, right?). This is a "Developer Preview" which means it *probably* works.
+
+<img width="350" alt="Leakin V2 Popup Tabs" src="https://user-images.githubusercontent.com/your-image-repo/leakin-v2-popup-tabs.png" /> <!-- TODO: Replace with actual image URL -->
+
+### More Knobs to Twiddle (Settings Tab)
+
+Remember how Leakin just did its thing? Well, now you have *some* control. Don't get too excited, it's not like you can tell it to ignore your blatantly obvious `DATABASE_URL` in global scope. Not yet, anyway.
+
+Open the Leakin popup, and you'll find a **Settings** tab. Here's what you can mess with:
+
+*   **Scan inline scripts (`<script>...</script>`):** Toggle this if you only trust scripts that come from a URL. Or if your inline stuff is *definitely* clean (lol).
+*   **Scan same-origin external scripts (`<script src="...">`):** For when you *kinda* trust your own domain's scripts but still want Leakin to sniff around.
+*   **Scan window object properties (`window...`):** Dives into `window` looking for loose creds. Because sometimes you (or that intern) just yeet tokens onto global objects.
+*   **Show results popup on page after scan completes:** That big, in-your-face popup that shows up on the page itself? Yeah, you can turn that off if it's harshing your mellow. Leakin still logs to the console.
+
+Settings are **saved automatically** and stick around. So, configure once, forget until you inevitably need to change it again.
+
+### Where'd My Leaks Go? (Results Tab)
+
+Previously, if you missed the on-page popup or your console was a mess, good luck finding those leaks again without a re-scan. Now, the Leakin popup has a **Results** tab!
+
+*   It shows findings from the **last scan** you ran on the current page via the popup's "Run on Current Page" button.
+*   Got a bunch of junk from a test run? There's a handy **"Clear Results"** button to wipe the slate clean for that tab's view.
+
+So now you have *two* places to be reminded of your security oversights. You're welcome.
 
 ---
 
