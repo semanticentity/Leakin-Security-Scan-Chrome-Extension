@@ -108,25 +108,44 @@
   </div>
   
   <div id="results" class="tab-content">
-    <p style="font-size: 14px; padding: 15px; background-color: #f5f5f5; border-radius: 4px;">
-      <strong>Pro Tip:</strong> View your scan history in Chrome by typing <code>chrome://extensions</code> in the address bar, then click on "Errors" to see all detected credential leaks across sites.
-    </p>
+    <div id="resultsContainer" style="max-height: 400px; overflow-y: auto; border: 1px solid #eee; padding: 10px; margin-bottom: 10px; background-color: #f9f9f9;">
+      <p>No results yet. Run a scan to see findings here.</p>
+    </div>
+    <button id="clearResultsButton" style="margin-bottom: 10px; background-color: #d9534f; width: auto; padding: 5px 10px; font-size: 12px;">Clear Results</button>
   </div>
   
   <div id="settings" class="tab-content">
-    <div style="padding: 15px; background-color: #f5f5f5; border-radius: 4px;">
-      <p><strong>Is Leakin killing your vibe?</strong></p>
-      <p>Just disable the extension when you don't need it:</p>
-      <ol style="margin-left: 20px;">
-        <li>Go to <code>chrome://extensions</code></li>
-        <li>Toggle off Leakin</li>
-        <li>Re-enable when you need to scan again</li>
-      </ol>
+    <div class="settings-group">
+      <label for="scanInlineScripts">
+        <input type="checkbox" id="scanInlineScripts" name="scanInlineScripts">
+        Scan inline scripts (&lt;script&gt;...&lt;/script&gt;)
+      </label>
     </div>
+    <div class="settings-group">
+      <label for="scanExternalScripts">
+        <input type="checkbox" id="scanExternalScripts" name="scanExternalScripts">
+        Scan same-origin external scripts (&lt;script src="..."&gt;)
+      </label>
+    </div>
+    <div class="settings-group">
+      <label for="scanWindowObjects">
+        <input type="checkbox" id="scanWindowObjects" name="scanWindowObjects">
+        Scan window object properties (window...)
+      </label>
+    </div>
+    <div class="settings-group">
+      <label for="showPopupOnScan">
+        <input type="checkbox" id="showPopupOnScan" name="showPopupOnScan">
+        Show results popup on page after scan completes
+      </label>
+    </div>
+     <p style="font-size: 12px; color: #666; margin-top: 20px;">
+      Settings are saved automatically.
+    </p>
   </div>
   
-  <div class="version-info">
-    Version 1.0.0
+  <div class="version-info" id="versionDisplay">
+    Loading version...
   </div>
   
   <script src="popup.js"></script>
