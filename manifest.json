@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Leakin",
-  "version": "1.0.1",
-  "description": "Scan web pages for exposed API keys, credentials, and secrets with validation and risk assessment",
+  "version": "2.0.0",
+  "description": "V2: Scan web pages for exposed API keys, credentials, and secrets with validation and risk assessment",
   "permissions": ["activeTab", "storage"],
   "action": {
     "default_popup": "popup.html",
