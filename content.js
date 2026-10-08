@@ -51,7 +51,7 @@ function copyToClipboard(findings) {
   // Scrub PII before creating the prompt
   const scrubbedFindings = scrubPII(findings);
   
-  const prompt = `Hey boss, I need you to analyze a potential credential leak detected by **Leakin**, every vibe coder's fav Chrome extension.
+  const prompt = `Analyze a potential credential exposure detected by **Leakin**.
 
 Here's the leak finding as a JSON payload from Leakin:
 
@@ -61,12 +61,12 @@ ${JSON.stringify(scrubbedFindings, null, 2)}
 1. **What is this?**
 2. **Why is it dangerous (if it is)?**
 3. **How to spot FALSE POSITIVES and make sure they're not an issue?**
-4. **If this is MY app:** what should I do to fix it, prevent it, and avoid embarrassing myself in the future?
-5. **If this is SOMEONE ELSE'S app:** how do I report it responsibly without being a troll or breaking any laws?
-6. **Explain like I who skipped class the day they taught "Don't hardcode secrets" and now my life may be in your hands.**
+4. **If this is my application:** what should I do to contain, remediate, and prevent the issue?
+5. **If this belongs to someone else:** how should I report it responsibly and lawfully?
+6. Explain the answer in plain language and distinguish a pattern match from a verified, active credential.
 
 DISCLAIMER: This is for **education**, **security awareness**, and **responsible development**. 
-I even attempted to scrub the PII from the findings, but some sensitive information may still be present because I clearly don't know what I'm doing.
+Leakin attempted to redact common forms of personal information, but sensitive material may remain. Do not send this payload to a third-party service unless you are authorized to do so.
 `;
 
   navigator.clipboard.writeText(prompt).then(() => {
